@@ -55,17 +55,43 @@ async def debug_games(username: str):
                     logger.error(f"Failed to get monthly games: {e}")
                     result["monthly_error"] = str(e)
 
-                # Try get_games_in_date_range directly
+                # Manual date range test
                 try:
-                    logger.info(f"Trying get_games_in_date_range from {start_date} to {end_date}")
-                    range_games = await client.get_games_in_date_range(username, start_date, end_date, max_games=5)
-                    logger.info(f"Got {len(range_games)} games from range")
-                    result["range_games_count"] = len(range_games)
-                    result["range_sample"] = [{"end_time": g.end_time} for g in range_games[:3]]
+                    logger.info(f"Manual date range test")
+                    from datetime import datetime
+
+                    # Calculate what months should be fetched
+                    current = start_date.replace(day=1)
+                    end = end_date.replace(day=1)
+                    months = []
+                    while current <= end:
+                        months.append(f"{current.year}-{current.month:02d}")
+                        if current.month == 12:
+                            current = current.replace(year=current.year + 1, month=1)
+                        else:
+                            current = current.replace(month=current.month + 1)
+
+                    result["months_to_fetch"] = months
+
+                    # Calculate timestamps
+                    start_ts = int(datetime.combine(start_date, datetime.min.time()).timestamp())
+                    end_ts = int(datetime.combine(end_date, datetime.max.time()).timestamp())
+                    result["start_timestamp"] = start_ts
+                    result["end_timestamp"] = end_ts
+
+                    # Check if sample games would pass the filter
+                    if "monthly_sample" in result:
+                        result["sample_in_range"] = [
+                            {
+                                "end_time": g["end_time"],
+                                "in_range": start_ts <= g["end_time"] <= end_ts
+                            }
+                            for g in result["monthly_sample"]
+                        ]
+
                 except Exception as e:
-                    logger.error(f"Failed to get range games: {e}")
-                    result["range_error"] = str(e)
-                    result["range_error_type"] = type(e).__name__
+                    logger.error(f"Manual test failed: {e}")
+                    result["manual_error"] = str(e)
 
                 return result
             except Exception as e:
