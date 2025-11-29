@@ -26,6 +26,46 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
+@router.get("/debug/{username}")
+async def debug_games(username: str):
+    """Debug endpoint to check what games are being fetched."""
+    from datetime import date, timedelta
+
+    try:
+        async with ChessComAPIClient(redis_client=None) as client:
+            # Check what dates we're using
+            end_date = date.today()
+            start_date = end_date - timedelta(days=90)
+
+            logger.info(f"Fetching games from {start_date} to {end_date}")
+
+            try:
+                games = await client.get_recent_games(username=username, count=5)
+                return {
+                    "username": username,
+                    "start_date": str(start_date),
+                    "end_date": str(end_date),
+                    "games_found": len(games),
+                    "sample_games": [
+                        {
+                            "url": str(game.url),
+                            "end_time": game.end_time,
+                            "time_class": game.time_class,
+                        }
+                        for game in games[:3]
+                    ] if games else []
+                }
+            except Exception as e:
+                return {
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                    "start_date": str(start_date),
+                    "end_date": str(end_date),
+                }
+    except Exception as e:
+        return {"error": str(e), "error_type": type(e).__name__}
+
+
 class PatternCounts(BaseModel):
     """Aggregated pattern detection counts."""
 
