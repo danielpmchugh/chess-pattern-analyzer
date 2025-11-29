@@ -108,7 +108,7 @@ async def analyze_player_games(
             try:
                 games = await chess_client.get_recent_games(
                     username=username,
-                    limit=games_limit
+                    count=games_limit
                 )
             except UserNotFoundException:
                 raise HTTPException(
@@ -137,11 +137,11 @@ async def analyze_player_games(
 
         # Initialize analysis engine
         engine_config = EngineConfig(
-            stockfish_path=settings.STOCKFISH_PATH,
+            path=settings.STOCKFISH_PATH,
             depth=settings.STOCKFISH_DEPTH,
             threads=settings.STOCKFISH_THREADS,
-            hash_size_mb=settings.STOCKFISH_HASH,
-            timeout_seconds=settings.STOCKFISH_TIMEOUT,
+            hash_size=settings.STOCKFISH_HASH,
+            time_limit=float(settings.STOCKFISH_TIMEOUT),
         )
         analysis_engine = PatternAnalysisEngine(config=engine_config)
 
