@@ -55,7 +55,7 @@ class AnalysisResponse(BaseModel):
     description="Analyze a player's recent Chess.com games to identify patterns and weaknesses",
 )
 async def analyze_player_games(
-    username: str = Field(..., description="Chess.com username"),
+    username: str,
     games_limit: int = Query(
         default=10,
         ge=1,
