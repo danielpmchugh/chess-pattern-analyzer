@@ -41,38 +41,33 @@ async def debug_games(username: str):
             logger.info(f"Fetching games from {start_date} to {end_date}")
 
             try:
+                result = {"username": username, "start_date": str(start_date), "end_date": str(end_date)}
+
                 # Try to get monthly games directly
-                year, month = end_date.year, end_date.month
-                logger.info(f"Fetching monthly games for {year}-{month}")
-                monthly_games = await client.get_monthly_games(username, year, month)
+                try:
+                    year, month = end_date.year, end_date.month
+                    logger.info(f"Fetching monthly games for {year}-{month}")
+                    monthly_games = await client.get_monthly_games(username, year, month)
+                    logger.info(f"Got {len(monthly_games)} games for {year}-{month}")
+                    result["monthly_games_count"] = len(monthly_games)
+                    result["monthly_sample"] = [{"end_time": g.end_time} for g in monthly_games[:3]]
+                except Exception as e:
+                    logger.error(f"Failed to get monthly games: {e}")
+                    result["monthly_error"] = str(e)
 
-                logger.info(f"Got {len(monthly_games)} games for {year}-{month}")
+                # Try get_games_in_date_range directly
+                try:
+                    logger.info(f"Trying get_games_in_date_range from {start_date} to {end_date}")
+                    range_games = await client.get_games_in_date_range(username, start_date, end_date, max_games=5)
+                    logger.info(f"Got {len(range_games)} games from range")
+                    result["range_games_count"] = len(range_games)
+                    result["range_sample"] = [{"end_time": g.end_time} for g in range_games[:3]]
+                except Exception as e:
+                    logger.error(f"Failed to get range games: {e}")
+                    result["range_error"] = str(e)
+                    result["range_error_type"] = type(e).__name__
 
-                # Also try get_recent_games
-                logger.info("Trying get_recent_games")
-                recent_games = await client.get_recent_games(username=username, count=5)
-
-                return {
-                    "username": username,
-                    "start_date": str(start_date),
-                    "end_date": str(end_date),
-                    "monthly_games_count": len(monthly_games),
-                    "recent_games_count": len(recent_games),
-                    "sample_monthly": [
-                        {
-                            "url": str(g.url),
-                            "end_time": g.end_time,
-                        }
-                        for g in monthly_games[:2]
-                    ],
-                    "sample_recent": [
-                        {
-                            "url": str(g.url),
-                            "end_time": g.end_time,
-                        }
-                        for g in recent_games[:2]
-                    ],
-                }
+                return result
             except Exception as e:
                 logger.error(f"Error in debug: {e}", exc_info=True)
                 return {
