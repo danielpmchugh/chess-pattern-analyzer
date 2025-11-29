@@ -8,8 +8,6 @@ weaknesses, and provide improvement recommendations.
 from fastapi import APIRouter, Query, HTTPException, status
 from typing import Optional
 from datetime import datetime
-from redis import asyncio as aioredis
-import asyncio
 
 from app.services.chess_com import ChessComAPIClient
 from app.engine.analysis_engine import PatternAnalysisEngine
@@ -88,23 +86,8 @@ async def analyze_player_games(
     )
 
     try:
-        # Initialize Redis client if available
-        redis_client = None
-        if settings.REDIS_URL:
-            try:
-                redis_client = await aioredis.from_url(
-                    settings.get_redis_url(),
-                    encoding="utf-8",
-                    decode_responses=True,
-                    socket_timeout=settings.REDIS_SOCKET_TIMEOUT,
-                    socket_connect_timeout=settings.REDIS_SOCKET_CONNECT_TIMEOUT,
-                )
-            except Exception as e:
-                logger.warning(f"Redis connection failed, continuing without cache: {e}")
-                redis_client = None
-
-        # Fetch games from Chess.com
-        async with ChessComAPIClient(redis_client=redis_client) as chess_client:
+        # Fetch games from Chess.com (without Redis for now to simplify debugging)
+        async with ChessComAPIClient(redis_client=None) as chess_client:
             try:
                 games = await chess_client.get_recent_games(
                     username=username,
@@ -221,10 +204,6 @@ async def analyze_player_games(
             endgame_mistakes=endgame_mistakes,
             total_games=analyzed_count,
         )
-
-        # Close Redis if we opened it
-        if redis_client:
-            await redis_client.close()
 
         logger.info(f"Analysis complete for {username}: {analyzed_count} games analyzed")
 
