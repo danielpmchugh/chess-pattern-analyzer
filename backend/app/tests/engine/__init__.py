@@ -1,0 +1,1 @@
+"""Chess engine tests package."""

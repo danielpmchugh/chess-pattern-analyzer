@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: chess-pattern-analyzer-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DEBUG
+        value: false
+      - key: DATABASE_URL
+        sync: false  # Will be set manually or from Neon
+      - key: REDIS_URL
+        sync: false  # Will be set manually or from Upstash
+      - key: SECRET_KEY
+        generateValue: true  # Auto-generate secure key
+      - key: CORS_ORIGINS
+        value: '["https://your-frontend.vercel.app"]'
+      - key: CACHE_ENABLED
+        value: true
+      - key: CACHE_TTL
+        value: 43200
+    healthCheckPath: /healthz
+    autoDeploy: true

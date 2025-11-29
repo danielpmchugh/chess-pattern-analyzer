@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: chess_postgres
+    environment:
+      POSTGRES_DB: chess_analyzer
+      POSTGRES_USER: developer
+      POSTGRES_PASSWORD: local_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U developer"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chess_network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: chess_redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chess_network
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chess_backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Application
+      ENVIRONMENT: development
+      DEBUG: "true"
+      LOG_LEVEL: DEBUG
+
+      # Database
+      DATABASE_URL: postgresql://developer:local_dev_password@postgres:5432/chess_analyzer
+
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+
+      # Chess.com API
+      CHESS_COM_API_BASE_URL: https://api.chess.com/pub
+
+      # Stockfish
+      STOCKFISH_PATH: /usr/local/bin/stockfish
+      STOCKFISH_DEPTH: "18"
+      STOCKFISH_THREADS: "2"
+
+      # Rate Limiting
+      RATE_LIMIT_ENABLED: "true"
+
+      # Caching
+      CACHE_ENABLED: "true"
+
+      # Security (dev only - use strong secret in production)
+      SECRET_KEY: dev_secret_key_change_in_production
+
+      # CORS (allow frontend on localhost)
+      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001"]'
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      # Mount source code for hot-reload during development
+      - ./app:/app/app
+    networks:
+      - chess_network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/healthz\").read()'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  chess_network:
+    driver: bridge
