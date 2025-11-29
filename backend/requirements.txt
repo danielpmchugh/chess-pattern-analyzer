@@ -1,46 +1,35 @@
 # Core Framework
-fastapi==0.109.2
-uvicorn[standard]==0.27.1
-python-multipart==0.0.9
+fastapi>=0.109.0,<0.116.0
+uvicorn[standard]>=0.27.0,<0.33.0
+python-multipart>=0.0.9,<0.1.0
 
 # Pydantic for data validation
-pydantic==2.6.1
-pydantic-settings==2.1.0
+pydantic>=2.6.0,<3.0.0
+pydantic-settings>=2.1.0,<3.0.0
 
 # HTTP client for Chess.com API
-httpx==0.26.0
+httpx>=0.26.0,<0.28.0
 
 # Redis client (async)
-redis==5.0.1
+redis>=5.0.0,<6.0.0
 
 # Database (PostgreSQL)
-asyncpg==0.29.0
-sqlalchemy[asyncio]==2.0.25
+asyncpg>=0.29.0,<0.30.0
+sqlalchemy[asyncio]>=2.0.0,<2.1.0
 
 # Chess engine
-python-chess==1.999
-stockfish==3.28.0
+python-chess>=1.999,<2.0.0
+stockfish>=3.28.0,<4.0.0
 
-# Authentication & Security
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+# Authentication & Security (optional, only if needed)
+# python-jose[cryptography]>=3.3.0,<4.0.0
+# passlib[bcrypt]>=1.7.4,<2.0.0
 
 # Rate limiting
-slowapi==0.1.9
+slowapi>=0.1.9,<0.2.0
 
-# Monitoring & Logging
-sentry-sdk[fastapi]==1.40.3
-
-# Testing
-pytest==8.0.0
-pytest-asyncio==0.23.4
-pytest-cov==4.1.0
-httpx==0.26.0  # Already listed above, used for testing
-
-# Development
-black==24.1.1
-ruff==0.2.1
-mypy==1.8.0
+# Monitoring (optional)
+# sentry-sdk[fastapi]>=1.40.0,<2.0.0
 
 # ASGI server
-gunicorn==21.2.0
+gunicorn>=21.2.0,<23.0.0
