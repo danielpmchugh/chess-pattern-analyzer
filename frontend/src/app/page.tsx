@@ -37,7 +37,7 @@ export default function Home() {
     setResult(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/v1/analyze/${username}?games_limit=10`);
+      const response = await fetch(`${API_URL}/api/v1/simple-analyze/${username}?games_limit=10`);
 
       if (!response.ok) {
         const errorData = await response.json();
