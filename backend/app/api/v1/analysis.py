@@ -30,6 +30,7 @@ router = APIRouter()
 async def debug_games(username: str):
     """Debug endpoint to check what games are being fetched."""
     from datetime import date, timedelta
+    import traceback
 
     try:
         async with ChessComAPIClient(redis_client=None) as client:
@@ -40,30 +41,54 @@ async def debug_games(username: str):
             logger.info(f"Fetching games from {start_date} to {end_date}")
 
             try:
-                games = await client.get_recent_games(username=username, count=5)
+                # Try to get monthly games directly
+                year, month = end_date.year, end_date.month
+                logger.info(f"Fetching monthly games for {year}-{month}")
+                monthly_games = await client.get_monthly_games(username, year, month)
+
+                logger.info(f"Got {len(monthly_games)} games for {year}-{month}")
+
+                # Also try get_recent_games
+                logger.info("Trying get_recent_games")
+                recent_games = await client.get_recent_games(username=username, count=5)
+
                 return {
                     "username": username,
                     "start_date": str(start_date),
                     "end_date": str(end_date),
-                    "games_found": len(games),
-                    "sample_games": [
+                    "monthly_games_count": len(monthly_games),
+                    "recent_games_count": len(recent_games),
+                    "sample_monthly": [
                         {
-                            "url": str(game.url),
-                            "end_time": game.end_time,
-                            "time_class": game.time_class,
+                            "url": str(g.url),
+                            "end_time": g.end_time,
                         }
-                        for game in games[:3]
-                    ] if games else []
+                        for g in monthly_games[:2]
+                    ],
+                    "sample_recent": [
+                        {
+                            "url": str(g.url),
+                            "end_time": g.end_time,
+                        }
+                        for g in recent_games[:2]
+                    ],
                 }
             except Exception as e:
+                logger.error(f"Error in debug: {e}", exc_info=True)
                 return {
                     "error": str(e),
                     "error_type": type(e).__name__,
+                    "traceback": traceback.format_exc(),
                     "start_date": str(start_date),
                     "end_date": str(end_date),
                 }
     except Exception as e:
-        return {"error": str(e), "error_type": type(e).__name__}
+        logger.error(f"Outer error in debug: {e}", exc_info=True)
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "traceback": traceback.format_exc(),
+        }
 
 
 class PatternCounts(BaseModel):
