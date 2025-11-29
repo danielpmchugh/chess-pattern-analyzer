@@ -23,7 +23,7 @@ RUN wget -q https://github.com/official-stockfish/Stockfish/releases/download/sf
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Runtime stage
 FROM python:3.11-slim
@@ -31,7 +31,6 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PATH=/root/.local/bin:$PATH \
     PORT=8000
 
 # Install runtime dependencies only
@@ -42,11 +41,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set working directory
 WORKDIR /app
 
-# Copy Python packages from builder
-COPY --from=builder /root/.local /root/.local
-
-# Copy Stockfish binary from builder
-COPY --from=builder /usr/local/bin/stockfish /usr/local/bin/stockfish
+# Copy Python packages from builder (installed globally)
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code
 COPY ./app ./app
