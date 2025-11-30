@@ -2,10 +2,51 @@
 
 A web application that analyzes your Chess.com games to identify patterns, weaknesses, and provide actionable recommendations to improve your gameplay.
 
+![Chess Pattern Analyzer Screenshot](Screenshot%202025-11-29%20203818.png)
+
 ## Live Demo
 
-- **Frontend:** [Deploy to Vercel](frontend/VERCEL_DEPLOYMENT_GUIDE.md)
+- **Frontend:** Deploy to Vercel (see [deployment guide](frontend/VERCEL_DEPLOYMENT_GUIDE.md))
 - **Backend API:** https://chess-pattern-analyzer.onrender.com
+- **API Docs:** https://chess-pattern-analyzer.onrender.com/api/docs
+- **Health Check:** https://chess-pattern-analyzer.onrender.com/healthz
+
+## Deployed Services
+
+### Production Environment
+
+**Backend (Render)**
+- **Service:** chess-pattern-analyzer-api
+- **Platform:** Render (Free Tier)
+- **Region:** US East (Ohio)
+- **Runtime:** Docker (Python 3.11)
+- **Auto-Deploy:** Enabled (main branch)
+- **Health Monitoring:** Automated checks every 30s
+
+**Database (Neon)**
+- **Type:** PostgreSQL 17
+- **Platform:** Neon Serverless
+- **Region:** AWS us-east-1
+- **Tier:** Free (0.5GB storage, 0.5GB RAM)
+- **Features:** Auto-suspend, branch management
+
+**Cache (Upstash)**
+- **Type:** Redis
+- **Platform:** Upstash Serverless
+- **Tier:** Free (10k commands/day, 256MB)
+- **Features:** TLS encryption, global replication
+
+**Frontend (Vercel)**
+- **Framework:** Next.js 16
+- **Platform:** Vercel (Free Tier)
+- **Auto-Deploy:** Enabled (main branch)
+- **Features:** Edge network, automatic HTTPS, preview deployments
+
+**CI/CD (GitHub Actions)**
+- **Workflows:** Backend CI, Frontend CI (planned)
+- **Tests:** Route registration, config validation, exception handling
+- **Checks:** Docker build, linting, dependency validation
+- **Triggers:** Push to main, pull requests
 
 ## Features
 
@@ -102,39 +143,64 @@ See [frontend/VERCEL_DEPLOYMENT_GUIDE.md](frontend/VERCEL_DEPLOYMENT_GUIDE.md)
 ## API Documentation
 
 Once the backend is running, visit:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- **Swagger UI:** http://localhost:8000/api/docs (or https://chess-pattern-analyzer.onrender.com/api/docs)
+- **ReDoc:** http://localhost:8000/api/redoc (or https://chess-pattern-analyzer.onrender.com/api/redoc)
 
-### Main Endpoint
+### Main Endpoints
+
+#### Simple Analysis (MVP - Recommended)
 
 ```
-GET /api/v1/analyze/{username}?games_limit=10
+GET /api/v1/simple-analyze/{username}?games_limit=10
 ```
+
+Fast analysis using current month's games with simplified pattern detection. Perfect for MVP and testing.
 
 **Parameters:**
 - `username` (required): Chess.com username
 - `games_limit` (optional): Number of recent games to analyze (default: 10, max: 50)
 
+**Example:**
+```bash
+curl "https://chess-pattern-analyzer.onrender.com/api/v1/simple-analyze/magnus10?games_limit=5"
+```
+
 **Response:**
 ```json
 {
-  "username": "exampleuser",
+  "username": "magnus10",
   "total_games": 10,
   "patterns": {
     "tactical_errors": 15,
-    "opening_mistakes": 8,
+    "opening_mistakes": 10,
     "time_pressure": 5,
-    "positional_errors": 12,
-    "endgame_mistakes": 6
+    "positional_errors": 20,
+    "endgame_mistakes": 10
   },
   "recommendations": [
-    "Focus on tactical training to reduce blunders",
-    "Study opening theory for your preferred openings",
-    "Practice time management in blitz games"
+    "Study opening theory for your most-played openings...",
+    "Practice endgame fundamentals...",
+    "Analyze your games with an engine after playing..."
   ],
   "analysis_date": "2025-11-29T12:00:00Z"
 }
 ```
+
+#### Full Analysis (Advanced)
+
+```
+GET /api/v1/analyze/{username}?games_limit=10
+```
+
+Comprehensive analysis with Stockfish engine evaluation (in development).
+
+#### Health Check
+
+```
+GET /healthz
+```
+
+Returns: `{"status": "healthy"}`
 
 ## Project Structure
 
