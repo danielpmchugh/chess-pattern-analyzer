@@ -51,7 +51,7 @@ jobs:
         ruff check app/ --select E,F,W --ignore E501 || echo "Linting completed with warnings"
       continue-on-error: true
 
-    - name: Run tests
+    - name: Run route registration tests
       working-directory: ./backend
       env:
         ENVIRONMENT: test
@@ -59,8 +59,20 @@ jobs:
         REDIS_URL: redis://localhost:6379/0
         SECRET_KEY: test-secret-key-for-ci
       run: |
-        pip install pytest pytest-asyncio pytest-cov
-        pytest app/tests/test_config.py app/tests/test_exceptions.py -v --tb=short || true
+        pip install pytest pytest-asyncio pytest-cov httpx
+        # Route tests ensure all endpoints are properly registered
+        pytest app/tests/test_routes.py -v --tb=short --cov-fail-under=0 --cov-report=term-missing
+
+    - name: Run other tests
+      working-directory: ./backend
+      env:
+        ENVIRONMENT: test
+        DATABASE_URL: postgresql://test:test@localhost:5432/test
+        REDIS_URL: redis://localhost:6379/0
+        SECRET_KEY: test-secret-key-for-ci
+      run: |
+        pytest app/tests/test_config.py app/tests/test_exceptions.py -v --tb=short --cov-fail-under=0 || true
+      continue-on-error: true
 
     - name: Check requirements.txt for duplicates
       working-directory: ./backend
