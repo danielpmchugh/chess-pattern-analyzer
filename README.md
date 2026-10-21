@@ -13,7 +13,7 @@ A web application that analyzes your Chess.com games to identify patterns, weakn
 
 ## Deployed Services
 
-### Production Environment
+### Deployment
 
 **Backend (Render)**
 - **Service:** chess-pattern-analyzer-api
